@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+.env
+*.env
+.DS_Store
+*.sqlite3
+instance/
+*.db
+*.egg-info/
+*.log
+.cache/
+.ipynb_checkpoints/
