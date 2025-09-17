@@ -1,0 +1,30 @@
+version: '3.10'
+
+services:
+  importfolio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:10000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+      - PORT=10000
+    volumes:
+      # Mount source code for development
+      - ./app.py:/app/app.py
+      - ./templates:/app/templates
+      - ./static:/app/static
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:10000/health', timeout=10)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  default:
+    name: importfolio-network

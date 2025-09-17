@@ -1,5 +1,9 @@
-flask>=3.0.3
-vnstock>=3.2.2
-PyPortfolioOpt>=1.5.5
+flask>=3.1.2
+gunicorn>=23.0.0
+matplotlib>=3.10.6
+numpy>=2.2.6
+pandas>=2.3.2
+pyportfolioopt>=1.5.6
 seaborn>=0.13.2
-gunicorn
+uvicorn>=0.35.0
+vnstock>=3.2.6

@@ -26,6 +26,11 @@ TRADING_DAYS_PER_YEAR = 252
 def index():
     return render_template('index.html')
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for container monitoring"""
+    return {'status': 'healthy', 'service': 'importfolio'}, 200
+
 @app.route('/optimize', methods=['POST'])
 def optimize():
     # Ensure matplotlib uses a safe default style to avoid style errors

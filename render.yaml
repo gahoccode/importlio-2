@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: importfolio
+    env: docker
+    region: oregon
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+    healthCheckPath: /health
+    autoDeploy: true

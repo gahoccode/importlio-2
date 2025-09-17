@@ -1,0 +1,64 @@
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.cache
+.venv
+venv/
+.env
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation and misc
+README.md
+prd.md
+*.md
+!CLAUDE.md
+
+# Build artifacts
+dist/
+build/
+*.egg-info
+
+# Log files
+*.log
+
+# Batch files (Windows specific)
+*.bat
+
+# Test files (exclude from production)
+tests/
+
+# Development files
+.windsurfrules
+.claude/
+uv.lock
+
+# Temporary files
+tmp/
+temp/
