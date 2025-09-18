@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Importfolio Optimizer</title>
+    <title>Importfolio - Vietnam Stock Portfolio Optimizer</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -24,32 +24,92 @@
         </div>
       {% endif %}
     {% endwith %}
-    <h1 class="mb-4">Vietnam Stock Portfolio Optimizer</h1>
-    <form method="POST" action="/optimize" id="portfolio-form">
-    <div class="mb-3">
-        <label for="start_date" class="form-label">Start Date</label>
-        <input type="date" class="form-control" id="start_date" name="start_date" value="2025-01-20" required>
+    
+    <h1>Vietnam Stock Portfolio Optimizer</h1>
+    
+    <div class="form-section">
+        <form method="POST" action="/optimize" id="portfolio-form">
+            
+            <!-- Date Range Section -->
+            <h4>Analysis Period</h4>
+            <div class="input-group-wrapper">
+                <div class="mb-3">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="2025-01-20" required>
+                    <div class="form-text">Historical data start date</div>
+                </div>
+                <div class="mb-3">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="2025-04-20" required>
+                    <div class="form-text">Historical data end date</div>
+                </div>
+            </div>
+
+            <!-- Optimization Parameters -->
+            <h4>Optimization Parameters</h4>
+            <div class="input-group-wrapper">
+                <div class="mb-3">
+                    <label for="risk_free_rate" class="form-label">Risk-free Rate (%)</label>
+                    <input type="number" step="0.01" class="form-control" id="risk_free_rate" name="risk_free_rate" value="0.01" required>
+                    <div class="form-text">Annual risk-free rate for Sharpe ratio calculation</div>
+                </div>
+                <div class="mb-3">
+                    <label for="num_simulations" class="form-label">Monte Carlo Simulations</label>
+                    <input type="number" class="form-control" id="num_simulations" name="num_simulations" value="5000" required min="1" max="10000">
+                    <div class="form-text">Number of portfolio combinations to test (1-10,000)</div>
+                </div>
+            </div>
+
+            <!-- Stock Selection -->
+            <h4>Stock Selection</h4>
+            <div class="mb-4">
+                <label for="tickers" class="form-label">Vietnam Stock Tickers</label>
+                <textarea class="form-control" id="tickers" name="tickers" rows="3" required placeholder="Enter stock tickers separated by commas">REE, DHC, FMC</textarea>
+                <div class="form-text">Enter Vietnamese stock symbols (e.g., VCB, VHM, HPG). Minimum 2 stocks required.</div>
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <span class="btn-text">Optimize Portfolio</span>
+                    <span class="btn-loading d-none">
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Analyzing...
+                    </span>
+                </button>
+            </div>
+        </form>
     </div>
-    <div class="mb-3">
-        <label for="end_date" class="form-label">End Date</label>
-        <input type="date" class="form-control" id="end_date" name="end_date" value="2025-04-20" required>
-    </div>
-        <div class="mb-3">
-            <label for="risk_free_rate" class="form-label">Risk-free Rate (%)</label>
-            <input type="number" step="0.01" class="form-control" id="risk_free_rate" name="risk_free_rate" value="0.01" required>
-        </div>
-        <div class="mb-3">
-            <label for="num_simulations" class="form-label">Number of Simulations</label>
-            <input type="number" class="form-control" id="num_simulations" name="num_simulations" value="5000" required min="1" max="10000">
-        </div>
-        <div class="mb-3">
-            <label for="tickers" class="form-label">Stock Tickers (comma-separated)</label>
-            <textarea class="form-control" id="tickers" name="tickers" rows="2" required>REE, DHC, FMC</textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Optimize Portfolio</button>
-    </form>
+    
     <div id="form-feedback" class="mt-3"></div>
+    
+    <!-- Information Section -->
+    <div class="metrics-card mt-4">
+        <h4>About Portfolio Optimization</h4>
+        <p>This tool uses Modern Portfolio Theory to find the optimal allocation of Vietnamese stocks that maximizes the Sharpe ratio. The analysis considers historical price data, expected returns, and risk correlations between selected assets.</p>
+        
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <div class="metric-item">
+                    <div class="metric-label">Data Source</div>
+                    <div class="metric-value" style="font-size: 1rem;">vnstock API</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-item">
+                    <div class="metric-label">Optimization Method</div>
+                    <div class="metric-value" style="font-size: 1rem;">Mean-Variance</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-item">
+                    <div class="metric-label">Objective</div>
+                    <div class="metric-value" style="font-size: 1rem;">Max Sharpe Ratio</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

@@ -1,36 +1,243 @@
-// Client-side validation and UX enhancements
+// Enhanced client-side validation and UX interactions
 
 document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('portfolio-form');
     if (form) {
+        
+        // Enhanced form validation and submission
         form.addEventListener('submit', function (e) {
             var riskFree = document.getElementById('risk_free_rate');
             var numSims = document.getElementById('num_simulations');
             var tickers = document.getElementById('tickers');
+            var startDate = document.getElementById('start_date');
+            var endDate = document.getElementById('end_date');
             var feedback = document.getElementById('form-feedback');
             var valid = true;
             feedback.innerHTML = '';
 
+            // Validate risk-free rate
             if (!riskFree.value || isNaN(riskFree.value)) {
                 valid = false;
-                feedback.innerHTML += '<div class="alert alert-danger">Risk-free rate is required and must be a number.</div>';
+                feedback.innerHTML += '<div class="alert alert-danger"><strong>Risk-free Rate:</strong> Please enter a valid number (e.g., 0.02 for 2%).</div>';
+            } else if (parseFloat(riskFree.value) < 0 || parseFloat(riskFree.value) > 1) {
+                valid = false;
+                feedback.innerHTML += '<div class="alert alert-warning"><strong>Risk-free Rate:</strong> Consider using decimal format (e.g., 0.02 for 2%) rather than percentage.</div>';
             }
+
+            // Validate simulations
             if (!numSims.value || isNaN(numSims.value) || numSims.value < 1 || numSims.value > 10000) {
                 valid = false;
-                feedback.innerHTML += '<div class="alert alert-danger">Number of simulations must be between 1 and 10,000.</div>';
+                feedback.innerHTML += '<div class="alert alert-danger"><strong>Simulations:</strong> Must be between 1 and 10,000. Recommended: 1000-5000 for good results.</div>';
             }
-            if (!tickers.value || tickers.value.split(',').filter(t => t.trim()).length < 2) {
+
+            // Validate tickers
+            var tickerList = tickers.value.split(',').map(t => t.trim()).filter(t => t);
+            if (tickerList.length < 2) {
                 valid = false;
-                feedback.innerHTML += '<div class="alert alert-danger">Please enter at least two stock tickers, comma-separated.</div>';
+                feedback.innerHTML += '<div class="alert alert-danger"><strong>Stock Tickers:</strong> Please enter at least two Vietnamese stock symbols.</div>';
+            } else if (tickerList.length > 10) {
+                valid = false;
+                feedback.innerHTML += '<div class="alert alert-warning"><strong>Stock Tickers:</strong> Too many stocks may slow optimization. Consider using 2-8 stocks.</div>';
             }
+
+            // Validate dates
+            if (startDate.value && endDate.value) {
+                var start = new Date(startDate.value);
+                var end = new Date(endDate.value);
+                var daysDiff = (end - start) / (1000 * 60 * 60 * 24);
+                
+                if (start >= end) {
+                    valid = false;
+                    feedback.innerHTML += '<div class="alert alert-danger"><strong>Dates:</strong> End date must be after start date.</div>';
+                } else if (daysDiff < 30) {
+                    feedback.innerHTML += '<div class="alert alert-warning"><strong>Dates:</strong> Short time period may not provide reliable optimization results.</div>';
+                }
+            }
+
             if (!valid) {
                 e.preventDefault();
+                // Scroll to feedback
+                feedback.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return false;
             }
-            // Show loading spinner
-            var btn = form.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Optimizing...';
+
+            // Enhanced loading state
+            showLoadingState();
         });
+
+        // Real-time input enhancements
+        addInputEnhancements();
+    }
+
+    // Add print optimization for results page
+    if (window.location.pathname.includes('results') || document.querySelector('#efficient-frontier')) {
+        optimizeForPrint();
     }
 });
+
+function showLoadingState() {
+    var btn = document.querySelector('button[type="submit"]');
+    var btnText = btn.querySelector('.btn-text');
+    var btnLoading = btn.querySelector('.btn-loading');
+    
+    if (btnText && btnLoading) {
+        btnText.classList.add('d-none');
+        btnLoading.classList.remove('d-none');
+    } else {
+        // Fallback for existing button structure
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Analyzing Portfolio...';
+    }
+    
+    btn.disabled = true;
+    
+    // Add progress indication
+    var progressContainer = document.createElement('div');
+    progressContainer.id = 'optimization-progress';
+    progressContainer.className = 'alert alert-info mt-3';
+    progressContainer.innerHTML = `
+        <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm me-2" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div>
+                <strong>Optimizing your portfolio...</strong><br>
+                <small class="text-muted">This may take 10-30 seconds depending on the number of simulations.</small>
+            </div>
+        </div>
+    `;
+    
+    var feedback = document.getElementById('form-feedback');
+    feedback.appendChild(progressContainer);
+}
+
+function addInputEnhancements() {
+    // Auto-format tickers
+    var tickersInput = document.getElementById('tickers');
+    if (tickersInput) {
+        tickersInput.addEventListener('blur', function() {
+            var cleaned = this.value
+                .split(',')
+                .map(ticker => ticker.trim().toUpperCase())
+                .filter(ticker => ticker)
+                .join(', ');
+            this.value = cleaned;
+        });
+
+        // Add character counter for tickers
+        tickersInput.addEventListener('input', function() {
+            var tickerCount = this.value.split(',').map(t => t.trim()).filter(t => t).length;
+            var counter = document.getElementById('ticker-counter');
+            if (!counter) {
+                counter = document.createElement('div');
+                counter.id = 'ticker-counter';
+                counter.className = 'form-text';
+                this.parentNode.appendChild(counter);
+            }
+            counter.textContent = `${tickerCount} stock${tickerCount !== 1 ? 's' : ''} selected`;
+            
+            if (tickerCount < 2) {
+                counter.className = 'form-text text-danger';
+            } else if (tickerCount > 8) {
+                counter.className = 'form-text text-warning';
+            } else {
+                counter.className = 'form-text text-success';
+            }
+        });
+    }
+
+    // Risk-free rate helper
+    var riskFreeInput = document.getElementById('risk_free_rate');
+    if (riskFreeInput) {
+        riskFreeInput.addEventListener('focus', function() {
+            var helper = document.getElementById('risk-free-helper');
+            if (!helper) {
+                helper = document.createElement('div');
+                helper.id = 'risk-free-helper';
+                helper.className = 'form-text text-info';
+                helper.innerHTML = '<small>💡 Tip: Use decimal format (0.02 = 2%, 0.05 = 5%)</small>';
+                this.parentNode.appendChild(helper);
+            }
+        });
+    }
+
+    // Date validation helper
+    var startDate = document.getElementById('start_date');
+    var endDate = document.getElementById('end_date');
+    if (startDate && endDate) {
+        function updateDateHelper() {
+            var helper = document.getElementById('date-helper');
+            if (startDate.value && endDate.value) {
+                var start = new Date(startDate.value);
+                var end = new Date(endDate.value);
+                var daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                
+                if (!helper) {
+                    helper = document.createElement('div');
+                    helper.id = 'date-helper';
+                    helper.className = 'form-text';
+                    endDate.parentNode.appendChild(helper);
+                }
+                
+                if (daysDiff > 0) {
+                    helper.textContent = `Analysis period: ${daysDiff} days`;
+                    helper.className = daysDiff < 30 ? 'form-text text-warning' : 'form-text text-success';
+                } else {
+                    helper.textContent = 'Invalid date range';
+                    helper.className = 'form-text text-danger';
+                }
+            }
+        }
+        
+        startDate.addEventListener('change', updateDateHelper);
+        endDate.addEventListener('change', updateDateHelper);
+    }
+}
+
+function optimizeForPrint() {
+    // Ensure charts are properly sized for printing
+    window.addEventListener('beforeprint', function() {
+        if (typeof Plotly !== 'undefined') {
+            var charts = ['efficient-frontier', 'allocation-pie'];
+            charts.forEach(function(chartId) {
+                var element = document.getElementById(chartId);
+                if (element && element.data) {
+                    Plotly.Plots.resize(element);
+                }
+            });
+        }
+    });
+    
+    // Add keyboard shortcut for printing
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            window.print();
+        }
+    });
+}
+
+// Utility function for smooth scrolling to elements
+function scrollToElement(element, offset = 0) {
+    if (element) {
+        var elementPosition = element.offsetTop - offset;
+        window.scrollTo({
+            top: elementPosition,
+            behavior: 'smooth'
+        });
+    }
+}
+
+// Enhanced error handling for network issues
+window.addEventListener('error', function(e) {
+    console.error('Application error:', e);
+    var feedback = document.getElementById('form-feedback');
+    if (feedback && !feedback.querySelector('.alert-danger')) {
+        feedback.innerHTML += '<div class="alert alert-danger">An unexpected error occurred. Please refresh the page and try again.</div>';
+    }
+});
+
+// Service worker registration for offline capability (future enhancement)
+if ('serviceWorker' in navigator) {
+    // Commented out - implement when PWA features are needed
+    // navigator.serviceWorker.register('/sw.js');
+}

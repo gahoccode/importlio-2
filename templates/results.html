@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio Optimization Results</title>
+    <title>Portfolio Optimization Results - Importfolio</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -20,61 +20,233 @@
         {% endfor %}
       {% endif %}
     {% endwith %}
-    <h1 class="mb-4">Optimization Results</h1>
-    <div id="metrics">
-        <!-- Portfolio metrics will be rendered here -->
-        {% if metrics %}
-        <ul class="list-group mb-4">
-            <li class="list-group-item">Expected Return: {{ metrics.exp_return }}%</li>
-            <li class="list-group-item">Volatility: {{ metrics.volatility }}%</li>
-            <li class="list-group-item">Sharpe Ratio: {{ metrics.sharpe_ratio }}</li>
-        </ul>
-        {% endif %}
+    
+    <h1>Portfolio Optimization Results</h1>
+    
+    <!-- Portfolio Metrics Section -->
+    {% if metrics %}
+    <div class="metrics-card">
+        <h4>Optimal Portfolio Metrics</h4>
+        <div class="metrics-grid">
+            <div class="metric-item">
+                <div class="metric-label">Expected Annual Return</div>
+                <div class="metric-value">{{ metrics.exp_return }}%</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-label">Annual Volatility (Risk)</div>
+                <div class="metric-value">{{ metrics.volatility }}%</div>
+            </div>
+            <div class="metric-item">
+                <div class="metric-label">Sharpe Ratio</div>
+                <div class="metric-value">{{ metrics.sharpe_ratio }}</div>
+            </div>
+        </div>
     </div>
+    {% endif %}
+
+    <!-- Charts Section -->
     <div class="row">
-        <div class="col-md-12 mb-4">
-            <h4>Efficient Frontier (PyPortfolioOpt Built-in)</h4>
-            {% if efficient_frontier_img %}
-            <img src="data:image/png;base64,{{ efficient_frontier_img }}" alt="Efficient Frontier Plot" class="img-fluid rounded border mb-3"/>
-            {% endif %}
+        <!-- Built-in Efficient Frontier -->
+        {% if efficient_frontier_img %}
+        <div class="col-12 mb-4">
+            <div class="chart-container">
+                <h4>Efficient Frontier Analysis</h4>
+                <p class="text-muted mb-3">PyPortfolioOpt visualization showing the optimal risk-return trade-off</p>
+                <img src="data:image/png;base64,{{ efficient_frontier_img }}" alt="Efficient Frontier Plot" class="img-fluid rounded border"/>
+            </div>
         </div>
-        <div class="col-md-6">
-            <div id="efficient-frontier"></div>
+        {% endif %}
+
+        <!-- Interactive Charts Row -->
+        <div class="col-lg-6 mb-4">
+            <div class="chart-container">
+                <h4>Interactive Efficient Frontier</h4>
+                <div id="efficient-frontier" style="height: 400px;"></div>
+            </div>
         </div>
-        <div class="col-md-6">
-            <div id="allocation-pie"></div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="chart-container">
+                <h4>Optimal Asset Allocation</h4>
+                <div id="allocation-pie" style="height: 400px;"></div>
+            </div>
         </div>
     </div>
-    <a href="/" class="btn btn-secondary mt-4">Back</a>
+
+    <!-- Action Buttons -->
+    <div class="d-flex gap-3 mt-4">
+        <a href="/" class="btn btn-primary">
+            ← Optimize New Portfolio
+        </a>
+        <button onclick="window.print()" class="btn btn-secondary">
+            🖨️ Print Results
+        </button>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="metrics-card mt-4">
+        <h4>Understanding Your Results</h4>
+        <div class="row">
+            <div class="col-md-4">
+                <h5>Expected Return</h5>
+                <p class="text-muted">The predicted annual return based on historical performance and correlation analysis.</p>
+            </div>
+            <div class="col-md-4">
+                <h5>Volatility</h5>
+                <p class="text-muted">The standard deviation of returns, representing the portfolio's risk level.</p>
+            </div>
+            <div class="col-md-4">
+                <h5>Sharpe Ratio</h5>
+                <p class="text-muted">Risk-adjusted return metric. Higher values indicate better risk-adjusted performance.</p>
+            </div>
+        </div>
+    </div>
 </div>
+
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 <script>
-// Plotly: Efficient Frontier
+// Theme colors from CSS variables
+const chartColors = {
+    categorical: ['#204F80', '#804F1F', '#0A2845', '#426F99', '#45280A', '#996F42'],
+    sequential: ['#FDF2C5', '#FCE584', '#FBD453', '#FBC030', '#F49F1E', '#DC7702', '#B85300', '#8F4014', '#793207', '#441B06'],
+    primary: '#56524D',
+    text: '#1F1916',
+    secondary: '#76706C'
+};
+
+// Common layout styling
+const layoutStyle = {
+    font: {
+        family: 'Georgia, Times New Roman, serif',
+        color: chartColors.text
+    },
+    plot_bgcolor: '#FFFFFF',
+    paper_bgcolor: '#FFFFFF',
+    margin: { t: 50, r: 30, b: 80, l: 80 }
+};
+
+// Plotly: Interactive Efficient Frontier
 var frontierData = {{ frontier_data|tojson }};
-var traceFrontier = {
-    x: frontierData.vols,
-    y: frontierData.returns,
-    mode: 'lines+markers',
-    name: 'Efficient Frontier',
-    line: {color: '#007bff'}
-};
-Plotly.newPlot('efficient-frontier', [traceFrontier], {
-    title: 'Efficient Frontier',
-    xaxis: {title: 'Volatility (%)'},
-    yaxis: {title: 'Expected Return (%)'}
-});
-// Plotly: Allocation Pie
+if (frontierData && frontierData.vols && frontierData.returns) {
+    var traceFrontier = {
+        x: frontierData.vols,
+        y: frontierData.returns,
+        mode: 'lines+markers',
+        name: 'Efficient Frontier',
+        line: { 
+            color: chartColors.primary,
+            width: 3
+        },
+        marker: {
+            color: chartColors.categorical[0],
+            size: 6,
+            line: {
+                color: chartColors.primary,
+                width: 1
+            }
+        },
+        hovertemplate: '<b>Risk-Return Profile</b><br>' +
+                      'Volatility: %{x:.2f}%<br>' +
+                      'Expected Return: %{y:.2f}%<br>' +
+                      '<extra></extra>'
+    };
+
+    var frontierLayout = {
+        ...layoutStyle,
+        title: {
+            text: 'Risk vs Return Trade-off',
+            font: { size: 16, color: chartColors.primary }
+        },
+        xaxis: { 
+            title: 'Volatility (%)',
+            gridcolor: '#E4E4E4',
+            font: { color: chartColors.text }
+        },
+        yaxis: { 
+            title: 'Expected Return (%)',
+            gridcolor: '#E4E4E4',
+            font: { color: chartColors.text }
+        },
+        showlegend: false
+    };
+
+    Plotly.newPlot('efficient-frontier', [traceFrontier], frontierLayout, {
+        responsive: true,
+        displayModeBar: false
+    });
+}
+
+// Plotly: Enhanced Allocation Pie Chart
 var allocationData = {{ allocation_data|tojson }};
-var tracePie = {
-    labels: allocationData.labels,
-    values: allocationData.values,
-    type: 'pie',
-    textinfo: 'label+percent',
-    hole: .4
-};
-Plotly.newPlot('allocation-pie', [tracePie], {
-    title: 'Asset Allocation'
-});
+if (allocationData && allocationData.labels && allocationData.values) {
+    var tracePie = {
+        labels: allocationData.labels,
+        values: allocationData.values,
+        type: 'pie',
+        textinfo: 'label+percent',
+        textposition: 'auto',
+        hole: 0.4,
+        marker: {
+            colors: chartColors.categorical.slice(0, allocationData.labels.length),
+            line: {
+                color: chartColors.text,
+                width: 2
+            }
+        },
+        hovertemplate: '<b>%{label}</b><br>' +
+                      'Allocation: %{percent}<br>' +
+                      'Weight: %{value:.3f}<br>' +
+                      '<extra></extra>',
+        textfont: {
+            color: chartColors.text,
+            size: 12
+        }
+    };
+
+    var pieLayout = {
+        ...layoutStyle,
+        title: {
+            text: 'Portfolio Weights Distribution',
+            font: { size: 16, color: chartColors.primary }
+        },
+        annotations: [{
+            font: {
+                size: 14,
+                color: chartColors.primary
+            },
+            showarrow: false,
+            text: "Optimal<br>Allocation",
+            x: 0.5,
+            y: 0.5
+        }],
+        showlegend: true,
+        legend: {
+            orientation: "v",
+            x: 1.02,
+            y: 0.5,
+            font: { color: chartColors.text }
+        }
+    };
+
+    Plotly.newPlot('allocation-pie', [tracePie], pieLayout, {
+        responsive: true,
+        displayModeBar: false
+    });
+}
+
+// Print styles
+const printStyles = `
+    @media print {
+        .btn, .alert { display: none !important; }
+        .chart-container { break-inside: avoid; }
+        .metrics-card { break-inside: avoid; }
+        body { font-size: 12pt; }
+        h1, h4 { color: #000 !important; }
+    }
+`;
+const styleSheet = document.createElement("style");
+styleSheet.innerText = printStyles;
+document.head.appendChild(styleSheet);
 </script>
 </body>
 </html>
