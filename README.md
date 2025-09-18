@@ -6,7 +6,7 @@ A Python Flask web application for mean-variance portfolio optimization using Vi
 ## Features
 - Input risk-free rate, number of simulations, and stock tickers
 - Fetches Vietnam stock prices
-- Optimizes portfolio (mean-variance)
+- Optimizes portfolio (mean-variance) using PyPortfolioOpt with OSQP solver
 - Visualizes efficient frontier and asset allocation
 
 ## Setup Instructions
@@ -50,6 +50,11 @@ pytest
 - `static/css/`: Custom CSS
 - `static/js/`: Custom JS
 - `tests/`: Unit/integration tests
+
+## Dependencies Note
+- **PyPortfolioOpt**: Core optimization library that automatically includes OSQP solver
+- **OSQP**: Quadratic programming solver (bundled with PyPortfolioOpt, no explicit dependency needed)
+- **Cross-platform**: Uses pre-built wheels for Mac ARM64 and Linux x86_64
 
 ## Batch Script
 See `run_importfolio.bat` for automated setup and run options.

@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     FLASK_ENV=production \
     PORT=10000
 
-# Install system dependencies
+# Install minimal system dependencies for scientific Python packages
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
@@ -25,10 +25,10 @@ RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /bin/bash appuser
 # Set working directory
 WORKDIR /app
 
-# Copy and install Python dependencies
+# Copy and install Python dependencies (prefer wheels over source)
 COPY requirements.txt ./
 RUN pip install --upgrade pip wheel setuptools && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --prefer-binary --timeout=300 -r requirements.txt
 
 # Copy application code
 COPY --chown=appuser:appuser . .
