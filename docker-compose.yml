@@ -1,29 +1,38 @@
-version: '3.10'
-
 services:
   importfolio:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:10000"
-    environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
-      - PYTHONUNBUFFERED=1
-      - PORT=10000
-    volumes:
-      # Mount source code for development
-      - ./app.py:/app/app.py
-      - ./templates:/app/templates
-      - ./static:/app/static
+      - "${HOST_PORT:-8080}:${PORT:-10000}"
+    env_file:
+      - .env
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:10000/health', timeout=10)"]
+      test: ["CMD", "python", "-c", "import requests; requests.get(f'http://localhost:{os.environ.get(\"PORT\", 10000)}/health', timeout=10)"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 60s
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /app/.matplotlib:noexec,nosuid,size=100m
+      - /app/.cache:noexec,nosuid,size=100m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   default:

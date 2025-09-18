@@ -33,10 +33,10 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### Poetry/uv alternative
+### UV alternative
 ```
-poetry install
-poetry run python app.py
+uv sync
+uv run python app.py
 ```
 
 ### 6. Run tests
@@ -55,6 +55,33 @@ pytest
 - **PyPortfolioOpt**: Core optimization library that automatically includes OSQP solver
 - **OSQP**: Quadratic programming solver (bundled with PyPortfolioOpt, no explicit dependency needed)
 - **Cross-platform**: Uses pre-built wheels for Mac ARM64 and Linux x86_64
+
+## Container Deployment
+
+### Docker
+```bash
+# Build the Docker image
+docker build -t importfolio:latest .
+
+# Run with Docker (development)
+docker run -p 8080:10000 -e PORT=10000 importfolio:latest
+
+# Run with Docker Compose (development)
+docker-compose up --build
+```
+
+### Local Build and Push
+```bash
+# Authentication (choose one)
+export GITHUB_TOKEN=your_token
+# OR
+gh auth login
+
+# Usage examples
+./build-and-push.sh                    # Auto-detects branch/tag
+./build-and-push.sh --tag v1.2.3       # Custom tag
+./build-and-push.sh --build-only       # Build without push
+```
 
 ## Batch Script
 See `run_importfolio.bat` for automated setup and run options.
