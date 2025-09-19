@@ -46,12 +46,22 @@
 
     <!-- Charts Section -->
     <div class="row">
-        <!-- Built-in Efficient Frontier -->
-        {% if efficient_frontier_img %}
+        <!-- Plotly.py Generated Efficient Frontier -->
+        {% if efficient_frontier_html %}
         <div class="col-12 mb-4">
             <div class="chart-container">
                 <h4>Efficient Frontier Analysis</h4>
-                <p class="text-muted mb-3">PyPortfolioOpt visualization showing the optimal risk-return trade-off</p>
+                <p class="text-muted mb-3">Interactive visualization showing optimal risk-return trade-off with risk-free rate reference</p>
+                <div class="plotly-chart-wrapper">
+                    {{ efficient_frontier_html|safe }}
+                </div>
+            </div>
+        </div>
+        {% elif efficient_frontier_img %}
+        <div class="col-12 mb-4">
+            <div class="chart-container">
+                <h4>Efficient Frontier Analysis</h4>
+                <p class="text-muted mb-3">Static visualization showing the optimal risk-return trade-off</p>
                 <img src="data:image/png;base64,{{ efficient_frontier_img }}" alt="Efficient Frontier Plot" class="img-fluid rounded border"/>
             </div>
         </div>
@@ -105,13 +115,37 @@
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 <script>
-// Theme colors from CSS variables
+// Theme colors from CSS custom properties
+function getCSSVariable(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
 const chartColors = {
-    categorical: ['#204F80', '#804F1F', '#0A2845', '#426F99', '#45280A', '#996F42'],
-    sequential: ['#FDF2C5', '#FCE584', '#FBD453', '#FBC030', '#F49F1E', '#DC7702', '#B85300', '#8F4014', '#793207', '#441B06'],
-    primary: '#56524D',
-    text: '#1F1916',
-    secondary: '#76706C'
+    categorical: [
+        getCSSVariable('--chart-cat-1'),
+        getCSSVariable('--chart-cat-2'),
+        getCSSVariable('--chart-cat-3'),
+        getCSSVariable('--chart-cat-4'),
+        getCSSVariable('--chart-cat-5'),
+        getCSSVariable('--chart-cat-6')
+    ],
+    sequential: [
+        getCSSVariable('--chart-seq-1'),
+        getCSSVariable('--chart-seq-2'),
+        getCSSVariable('--chart-seq-3'),
+        getCSSVariable('--chart-seq-4'),
+        getCSSVariable('--chart-seq-5'),
+        getCSSVariable('--chart-seq-6'),
+        getCSSVariable('--chart-seq-7'),
+        getCSSVariable('--chart-seq-8'),
+        getCSSVariable('--chart-seq-9'),
+        getCSSVariable('--chart-seq-10')
+    ],
+    primary: getCSSVariable('--color-primary'),
+    text: getCSSVariable('--color-text'),
+    secondary: getCSSVariable('--color-text-secondary'),
+    background: getCSSVariable('--color-background'),
+    border: getCSSVariable('--color-border')
 };
 
 // Common layout styling
@@ -179,12 +213,16 @@ if (frontierData && frontierData.vols && frontierData.returns) {
 // Plotly: Enhanced Allocation Pie Chart
 var allocationData = {{ allocation_data|tojson }};
 if (allocationData && allocationData.labels && allocationData.values) {
+    // Determine if we should show labels on chart or use legend only
+    var showLabelsOnChart = allocationData.labels.length <= 4;
+    
     var tracePie = {
         labels: allocationData.labels,
         values: allocationData.values,
         type: 'pie',
-        textinfo: 'label+percent',
-        textposition: 'auto',
+        textinfo: showLabelsOnChart ? 'label+percent' : 'percent',
+        textposition: showLabelsOnChart ? 'inside' : 'inside',
+        insidetextorientation: 'horizontal',
         hole: 0.4,
         marker: {
             colors: chartColors.categorical.slice(0, allocationData.labels.length),
@@ -195,12 +233,15 @@ if (allocationData && allocationData.labels && allocationData.values) {
         },
         hovertemplate: '<b>%{label}</b><br>' +
                       'Allocation: %{percent}<br>' +
-                      'Weight: %{value:.3f}<br>' +
+                      'Weight: %{value:.2f}%<br>' +
                       '<extra></extra>',
         textfont: {
-            color: chartColors.text,
-            size: 12
-        }
+            color: chartColors.background,
+            size: showLabelsOnChart ? 12 : 14,
+            family: 'Georgia, serif'
+        },
+        // Prevent overlapping by using pull for small slices
+        pull: allocationData.values.map(v => v < 10 ? 0.1 : 0)
     };
 
     var pieLayout = {
@@ -212,7 +253,8 @@ if (allocationData && allocationData.labels && allocationData.values) {
         annotations: [{
             font: {
                 size: 14,
-                color: chartColors.primary
+                color: chartColors.primary,
+                family: 'Georgia, serif'
             },
             showarrow: false,
             text: "Optimal<br>Allocation",
@@ -224,8 +266,17 @@ if (allocationData && allocationData.labels && allocationData.values) {
             orientation: "v",
             x: 1.02,
             y: 0.5,
-            font: { color: chartColors.text }
-        }
+            font: { 
+                color: chartColors.text,
+                family: 'Georgia, serif',
+                size: 12
+            },
+            bgcolor: 'rgba(255,255,255,0.8)',
+            bordercolor: chartColors.border,
+            borderwidth: 1
+        },
+        // Ensure proper margins for legend
+        margin: { t: 50, r: 120, b: 50, l: 50 }
     };
 
     Plotly.newPlot('allocation-pie', [tracePie], pieLayout, {

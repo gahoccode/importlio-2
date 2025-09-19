@@ -263,6 +263,21 @@ textarea.form-control {
   box-shadow: var(--shadow);
 }
 
+/* Plotly Chart Wrapper */
+.plotly-chart-wrapper {
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+}
+
+.plotly-chart-wrapper .plotly-graph-div {
+  border-radius: var(--border-radius-sm);
+}
+
+/* Ensure Plotly charts are responsive */
+.plotly-chart-wrapper .main-svg {
+  border-radius: var(--border-radius-sm);
+}
+
 /* Image Styling */
 .img-fluid.rounded.border {
   border: 2px solid var(--color-border) !important;

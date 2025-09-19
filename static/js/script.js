@@ -1,5 +1,25 @@
 // Enhanced client-side validation and UX interactions
 
+// Validation constants (loaded from backend)
+let validationConstants = {
+    MIN_SIMULATIONS: 1,
+    MAX_SIMULATIONS: 10000,
+    MIN_TICKERS: 2,
+    MAX_TICKERS: 10,
+    MIN_HISTORICAL_DAYS: 30,
+    MAX_RISK_FREE_RATE: 0.5
+};
+
+// Load validation constants from backend
+fetch('/validation-constants')
+    .then(response => response.json())
+    .then(data => {
+        validationConstants = data;
+    })
+    .catch(error => {
+        console.warn('Could not load validation constants:', error);
+    });
+
 document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('portfolio-form');
     if (form) {
@@ -19,25 +39,25 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!riskFree.value || isNaN(riskFree.value)) {
                 valid = false;
                 feedback.innerHTML += '<div class="alert alert-danger"><strong>Risk-free Rate:</strong> Please enter a valid number (e.g., 0.02 for 2%).</div>';
-            } else if (parseFloat(riskFree.value) < 0 || parseFloat(riskFree.value) > 1) {
+            } else if (parseFloat(riskFree.value) < 0 || parseFloat(riskFree.value) > validationConstants.MAX_RISK_FREE_RATE) {
                 valid = false;
-                feedback.innerHTML += '<div class="alert alert-warning"><strong>Risk-free Rate:</strong> Consider using decimal format (e.g., 0.02 for 2%) rather than percentage.</div>';
+                feedback.innerHTML += `<div class="alert alert-warning"><strong>Risk-free Rate:</strong> Use decimal format (e.g., 0.02 for 2%). Values above ${validationConstants.MAX_RISK_FREE_RATE * 100}% seem unrealistic.</div>`;
             }
 
             // Validate simulations
-            if (!numSims.value || isNaN(numSims.value) || numSims.value < 1 || numSims.value > 10000) {
+            if (!numSims.value || isNaN(numSims.value) || numSims.value < validationConstants.MIN_SIMULATIONS || numSims.value > validationConstants.MAX_SIMULATIONS) {
                 valid = false;
-                feedback.innerHTML += '<div class="alert alert-danger"><strong>Simulations:</strong> Must be between 1 and 10,000. Recommended: 1000-5000 for good results.</div>';
+                feedback.innerHTML += `<div class="alert alert-danger"><strong>Simulations:</strong> Must be between ${validationConstants.MIN_SIMULATIONS} and ${validationConstants.MAX_SIMULATIONS:,}. Recommended: 1000-5000 for good results.</div>`;
             }
 
             // Validate tickers
             var tickerList = tickers.value.split(',').map(t => t.trim()).filter(t => t);
-            if (tickerList.length < 2) {
+            if (tickerList.length < validationConstants.MIN_TICKERS) {
                 valid = false;
-                feedback.innerHTML += '<div class="alert alert-danger"><strong>Stock Tickers:</strong> Please enter at least two Vietnamese stock symbols.</div>';
-            } else if (tickerList.length > 10) {
+                feedback.innerHTML += `<div class="alert alert-danger"><strong>Stock Tickers:</strong> Please enter at least ${validationConstants.MIN_TICKERS} Vietnamese stock symbols.</div>`;
+            } else if (tickerList.length > validationConstants.MAX_TICKERS) {
                 valid = false;
-                feedback.innerHTML += '<div class="alert alert-warning"><strong>Stock Tickers:</strong> Too many stocks may slow optimization. Consider using 2-8 stocks.</div>';
+                feedback.innerHTML += `<div class="alert alert-warning"><strong>Stock Tickers:</strong> Too many stocks may slow optimization. Consider using ${validationConstants.MIN_TICKERS}-${validationConstants.MAX_TICKERS} stocks.</div>`;
             }
 
             // Validate dates
@@ -49,8 +69,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (start >= end) {
                     valid = false;
                     feedback.innerHTML += '<div class="alert alert-danger"><strong>Dates:</strong> End date must be after start date.</div>';
-                } else if (daysDiff < 30) {
-                    feedback.innerHTML += '<div class="alert alert-warning"><strong>Dates:</strong> Short time period may not provide reliable optimization results.</div>';
+                } else if (daysDiff < validationConstants.MIN_HISTORICAL_DAYS) {
+                    feedback.innerHTML += `<div class="alert alert-warning"><strong>Dates:</strong> Short time period (${Math.ceil(daysDiff)} days) may not provide reliable optimization results. Recommended: ${validationConstants.MIN_HISTORICAL_DAYS}+ days.</div>`;
                 }
             }
 
@@ -135,9 +155,9 @@ function addInputEnhancements() {
             }
             counter.textContent = `${tickerCount} stock${tickerCount !== 1 ? 's' : ''} selected`;
             
-            if (tickerCount < 2) {
+            if (tickerCount < validationConstants.MIN_TICKERS) {
                 counter.className = 'form-text text-danger';
-            } else if (tickerCount > 8) {
+            } else if (tickerCount > validationConstants.MAX_TICKERS) {
                 counter.className = 'form-text text-warning';
             } else {
                 counter.className = 'form-text text-success';

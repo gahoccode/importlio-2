@@ -16,7 +16,7 @@ def test_index_route():
 def test_optimize_route_post_valid():
     tester = app.test_client()
     response = tester.post('/optimize', data={
-        'risk_free_rate': '2.0',
+        'risk_free_rate': '0.02',  # Updated to decimal format (2%)
         'num_simulations': '10',
         'tickers': 'VIC, VHM, VNM',
         'start_date': '2024-04-04',
@@ -26,9 +26,9 @@ def test_optimize_route_post_valid():
     # DEBUG: print response HTML to diagnose failures
     print(response.data.decode())
     # Pass test if either results heading or risk-free warning is present
-    assert (b'Optimization Results' in response.data or b'No portfolio can be constructed because all selected assets have expected returns below or equal to the risk-free rate' in response.data)
+    assert (b'Portfolio Optimization Results' in response.data or b'No portfolio can be constructed because all selected assets have expected returns below or equal to the risk-free rate' in response.data)
     # Optionally, check for a unique element from results.html, e.g. a div id or class
-    assert b'id="efficient-frontier"' in response.data or b'id="allocation-pie"' in response.data
+    assert b'id="efficient-frontier"' in response.data or b'id="allocation-pie"' in response.data or b'plotly-efficient-frontier' in response.data
 
 def test_optimize_route_post_missing_fields():
     tester = app.test_client()
@@ -43,7 +43,7 @@ def test_optimize_route_post_missing_fields():
 def test_optimize_route_post_invalid_ticker():
     tester = app.test_client()
     response = tester.post('/optimize', data={
-        'risk_free_rate': '2.0',
+        'risk_free_rate': '0.02',  # Updated to decimal format (2%)
         'num_simulations': '10',
         'tickers': 'FAKE1, FAKE2',
         'start_date': '2024-01-01',
@@ -53,5 +53,5 @@ def test_optimize_route_post_invalid_ticker():
     assert (
         b'No price data found' in response.data or
         b'Error fetching data' in response.data or
-        b'Not enough historical data for selected tickers.' in response.data
+        b'Not enough historical data. Need at least' in response.data
     )
